@@ -1,0 +1,392 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AAA CN Working Rhythm App</title>
+<style>
+html,body{
+  margin:0;
+  padding:0;
+  background:#07111f;
+  color:#ffffff;
+  font-family:Arial,"Microsoft YaHei","PingFang SC",sans-serif;
+}
+body{min-height:100vh;}
+.wrapper{
+  max-width:720px;
+  margin:0 auto;
+  padding:14px;
+}
+.header{
+  background:#102743;
+  border:2px solid #52e0a3;
+  border-radius:18px;
+  padding:16px;
+  text-align:center;
+}
+h1{margin:0;font-size:30px;line-height:1.1;}
+.pinyin{color:#ffd166;font-size:18px;font-weight:bold;margin-top:6px;}
+.ok{
+  margin-top:10px;
+  background:#52e0a3;
+  color:#06101d;
+  font-weight:bold;
+  border-radius:12px;
+  padding:8px;
+}
+.stats{
+  display:grid;
+  grid-template-columns:repeat(4,1fr);
+  gap:8px;
+  margin-top:12px;
+}
+.box{
+  background:#0d1d32;
+  border:1px solid #355477;
+  border-radius:14px;
+  padding:10px 4px;
+  text-align:center;
+}
+.box b{display:block;font-size:22px;}
+.box span{font-size:11px;color:#bcd3ef;}
+.controls{
+  display:grid;
+  grid-template-columns:1fr 1fr 1fr;
+  gap:8px;
+  margin-top:12px;
+}
+button{
+  border:0;
+  border-radius:14px;
+  padding:12px 6px;
+  font-size:15px;
+  font-weight:bold;
+  color:#06101d;
+  background:#ffd166;
+}
+button.green{background:#52e0a3;}
+button.red{background:#ff6b6b;}
+.game{
+  position:relative;
+  height:430px;
+  margin-top:14px;
+  border:2px solid #355477;
+  border-radius:22px;
+  overflow:hidden;
+  background:linear-gradient(#0d1d32,#07111f);
+  touch-action:manipulation;
+}
+.hint{
+  position:absolute;
+  left:10px;
+  right:10px;
+  top:10px;
+  z-index:5;
+  text-align:center;
+  background:rgba(0,0,0,.35);
+  border-radius:12px;
+  padding:8px;
+  font-weight:bold;
+}
+.target{
+  position:absolute;
+  left:50%;
+  bottom:24px;
+  transform:translateX(-50%);
+  width:130px;
+  height:130px;
+  border:5px solid white;
+  border-radius:50%;
+  background:rgba(82,224,163,.2);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-size:44px;
+  box-shadow:0 0 25px #52e0a3;
+}
+.target.flash{animation:flash .18s;}
+@keyframes flash{50%{transform:translateX(-50%) scale(1.12);}}
+.note{
+  position:absolute;
+  left:50%;
+  top:-80px;
+  transform:translateX(-50%);
+  width:78px;
+  height:78px;
+  border-radius:20px;
+  background:#ffd166;
+  color:#06101d;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-size:52px;
+  font-weight:bold;
+  border:3px solid white;
+}
+.feedback{
+  position:absolute;
+  top:45%;
+  left:50%;
+  transform:translate(-50%,-50%);
+  font-size:42px;
+  font-weight:bold;
+  color:#52e0a3;
+  text-align:center;
+  opacity:0;
+  pointer-events:none;
+}
+.feedback.show{animation:pop .7s;}
+@keyframes pop{
+  0%{opacity:0;transform:translate(-50%,-50%) scale(.7);}
+  20%{opacity:1;transform:translate(-50%,-50%) scale(1);}
+  100%{opacity:0;transform:translate(-50%,-70%) scale(1);}
+}
+.bigTap{
+  margin-top:12px;
+  width:100%;
+  min-height:74px;
+  border-radius:22px;
+  font-size:26px;
+  background:linear-gradient(90deg,#52e0a3,#ffd166);
+}
+.table{
+  margin-top:12px;
+  background:#0d1d32;
+  border-radius:16px;
+  padding:10px;
+}
+table{width:100%;border-collapse:collapse;font-size:13px;}
+td,th{border-bottom:1px solid #355477;padding:6px;text-align:center;}
+.small{font-size:12px;color:#bcd3ef;line-height:1.5;text-align:center;margin-top:8px;}
+</style>
+</head>
+<body>
+<div class="wrapper">
+  <div class="header">
+    <h1>中文拼音节奏考试</h1>
+    <div class="pinyin">Zhōngwén Pīnyīn Jiézòu Kǎoshì</div>
+    <div class="ok">LOAD OK / 页面已显示 / yèmiàn yǐ xiǎnshì</div>
+  </div>
+
+  <div class="stats">
+    <div class="box"><b id="level">1</b><span>级别<br>jíbié</span></div>
+    <div class="box"><b id="bpm">62</b><span>速度<br>sùdù</span></div>
+    <div class="box"><b id="score">0</b><span>本级分<br>běn jí fēn</span></div>
+    <div class="box"><b id="total">0.00</b><span>总分/10<br>zǒngfēn</span></div>
+  </div>
+
+  <div class="controls">
+    <button class="green" onclick="startExam()">开始考试<br>kāishǐ</button>
+    <button onclick="toggleMusic()">开启音乐<br>yīnyuè</button>
+    <button class="red" onclick="stopGame()">停止<br>tíngzhǐ</button>
+  </div>
+
+  <div class="game" id="game" onclick="tap()">
+    <div class="hint">♩ = 点击 1 次 diǎnjī yí cì | ♪♪ = 点击 2 次 diǎnjī liǎng cì</div>
+    <div class="feedback" id="feedback">完美<br><small>wánměi</small></div>
+    <div class="target" id="target">👤</div>
+  </div>
+
+  <button class="bigTap" onclick="tap()">点击节奏<br><span style="font-size:16px">diǎnjī jiézòu</span></button>
+
+  <div class="table">
+    <table>
+      <thead>
+        <tr><th>级别<br>jíbié</th><th>分数<br>fēnshù</th><th>得分<br>défēn</th><th>结果<br>jiéguǒ</th></tr>
+      </thead>
+      <tbody id="rows"></tbody>
+    </table>
+  </div>
+
+  <div class="small">
+    每级 100 分 = 1 分｜10 级 = 10 分满分<br>
+    Měi jí yì bǎi fēn = yì fēn｜shí jí = shí fēn mǎnfēn
+  </div>
+</div>
+
+<script>
+var bpmList=[0,62,68,74,80,86,92,98,104,112,120];
+var patterns={
+  1:['q','q','q','q','q','q','q','q'],
+  2:['q','q','ee','q','q','q','ee','q'],
+  3:['q','ee','q','q','ee','q','q','q'],
+  4:['q','ee','ee','q','q','ee','q','q'],
+  5:['ee','q','ee','q','q','ee','ee','q'],
+  6:['q','ee','ee','q','ee','q','ee','q'],
+  7:['ee','ee','q','q','ee','q','ee','ee'],
+  8:['q','ee','q','ee','ee','q','ee','ee'],
+  9:['ee','q','ee','ee','q','ee','ee','q'],
+  10:['ee','ee','q','ee','q','ee','ee','ee']
+};
+var level=1, running=false, note=null, targetTime=0, raw=0, maxRaw=0, currentEvents=[], eventIndex=0;
+var results=[null,null,null,null,null,null,null,null,null,null,null];
+var ctx=null, music=false, musicTimer=null, musicBeat=0;
+
+function audio(){
+  if(!ctx){ctx=new (window.AudioContext||window.webkitAudioContext)();}
+  if(ctx.state==='suspended'){ctx.resume();}
+}
+function beep(f,d,g){
+  audio();
+  var o=ctx.createOscillator();
+  var v=ctx.createGain();
+  o.frequency.value=f; o.type='triangle';
+  v.gain.value=g||0.05;
+  o.connect(v); v.connect(ctx.destination);
+  o.start();
+  v.gain.exponentialRampToValueAtTime(0.0001,ctx.currentTime+(d||0.08));
+  o.stop(ctx.currentTime+(d||0.08)+0.03);
+}
+function musicLoop(){
+  if(!music) return;
+  var roots=[220,196,174.61,196,146.83,174.61,196,220];
+  var root=roots[Math.floor(musicBeat/4)%roots.length];
+  beep(root*2,0.08,0.025);
+  if(musicBeat%4===0){beep(root,0.35,0.02);beep(root*1.189,0.35,0.015);beep(root*1.498,0.35,0.015);}
+  musicBeat++;
+  musicTimer=setTimeout(musicLoop,60000/bpmList[level]);
+}
+function toggleMusic(){
+  audio();
+  music=!music;
+  if(musicTimer) clearTimeout(musicTimer);
+  musicBeat=0;
+  if(music) musicLoop();
+}
+function drawRows(){
+  var html='';
+  var total=0;
+  for(var i=1;i<=10;i++){
+    var r=results[i];
+    if(r) total+=r;
+    html+='<tr><td>'+i+'</td><td>'+(r==null?'-':r)+'</td><td>'+(r==null?'-':(r/100).toFixed(2))+'</td><td>'+(r==null?'-':(r>=60?'通过<br>tōngguò':'继续练习<br>jìxù liànxí'))+'</td></tr>';
+  }
+  document.getElementById('rows').innerHTML=html;
+  document.getElementById('total').textContent=(total/100).toFixed(2);
+}
+function updateTop(){
+  document.getElementById('level').textContent=level;
+  document.getElementById('bpm').textContent=bpmList[level];
+  var point=maxRaw?Math.round(raw/maxRaw*100):0;
+  document.getElementById('score').textContent=point;
+}
+function makeEvents(){
+  var arr=[];
+  var base=patterns[level];
+  var reps=level<5?2:3;
+  for(var r=0;r<reps;r++){
+    for(var i=0;i<base.length;i++){
+      if(base[i]=='q'){arr.push('♩');}
+      else{arr.push('♪');arr.push('♪');}
+    }
+  }
+  return arr;
+}
+function startExam(){
+  results=[null,null,null,null,null,null,null,null,null,null,null];
+  level=1;
+  drawRows();
+  startLevel();
+}
+function startLevel(){
+  audio();
+  running=true;
+  raw=0;
+  currentEvents=makeEvents();
+  maxRaw=currentEvents.length*100;
+  eventIndex=0;
+  updateTop();
+  nextNote();
+}
+function nextNote(){
+  if(!running) return;
+  if(eventIndex>=currentEvents.length){
+    finishLevel();
+    return;
+  }
+  var game=document.getElementById('game');
+  if(note) note.remove();
+  note=document.createElement('div');
+  note.className='note';
+  note.textContent=currentEvents[eventIndex];
+  note.style.background=currentEvents[eventIndex]=='♩'?'#ffd166':'#70b8ff';
+  note.style.left=(50+((eventIndex%5)-2)*8)+'%';
+  game.appendChild(note);
+  targetTime=performance.now()+1900;
+  animateNote(performance.now(),1900);
+  eventIndex++;
+}
+function animateNote(start,dur){
+  var game=document.getElementById('game');
+  var targetY=game.clientHeight-115;
+  function frame(){
+    if(!running||!note) return;
+    var p=(performance.now()-start)/dur;
+    var y=-80+p*(targetY+80);
+    note.style.top=y+'px';
+    note.style.transform='translateX(-50%) scale('+(0.65+p*0.45)+')';
+    if(p>1.15){
+      note.className='note miss';
+      showFeedback('失误','shīwù','#ff6b6b');
+      setTimeout(nextNote,180);
+      return;
+    }
+    requestAnimationFrame(frame);
+  }
+  frame();
+}
+function tap(){
+  if(!running) return;
+  audio();
+  document.getElementById('target').classList.remove('flash');
+  void document.getElementById('target').offsetWidth;
+  document.getElementById('target').classList.add('flash');
+  var err=Math.abs(performance.now()-targetTime);
+  if(!note || err>260){
+    showFeedback('失误','shīwù','#ff6b6b'); beep(160,0.1,0.035); return;
+  }
+  var add=40, cn='稍晚', py='shāo wǎn', color='#ffd166';
+  if(err<=75){add=100;cn='完美';py='wánměi';color='#52e0a3';}
+  else if(err<=135){add=85;cn='很好';py='hěn hǎo';color='#70b8ff';}
+  else if(err<=220){add=70;cn='不错';py='búcuò';color='#ffd166';}
+  raw+=add;
+  note.remove();
+  note=null;
+  showFeedback(cn,py,color);
+  beep(add>=85?1046:660,0.07,0.055);
+  updateTop();
+  setTimeout(nextNote,120);
+}
+function showFeedback(cn,py,color){
+  var f=document.getElementById('feedback');
+  f.innerHTML=cn+'<br><small>'+py+'</small>';
+  f.style.color=color;
+  f.classList.remove('show');
+  void f.offsetWidth;
+  f.classList.add('show');
+}
+function finishLevel(){
+  running=false;
+  if(note){note.remove(); note=null;}
+  var point=maxRaw?Math.round(raw/maxRaw*100):0;
+  results[level]=point;
+  drawRows();
+  if(level<10){
+    level++;
+    updateTop();
+    setTimeout(startLevel,700);
+  }else{
+    showFeedback('完成','wánchéng','#52e0a3');
+  }
+}
+function stopGame(){
+  running=false;
+  if(note){note.remove(); note=null;}
+  showFeedback('停止','tíngzhǐ','#ff6b6b');
+}
+drawRows();
+updateTop();
+</script>
+</body>
+</html>
