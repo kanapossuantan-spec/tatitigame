@@ -1,0 +1,839 @@
+
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>中文拼音节奏考试</title>
+<style>
+*{
+  box-sizing:border-box;
+  -webkit-tap-highlight-color:transparent;
+}
+html,body{
+  margin:0;
+  padding:0;
+  min-height:100%;
+  background:#06101d;
+  color:white;
+  font-family:Arial,"Microsoft YaHei","PingFang SC","Noto Sans SC",sans-serif;
+}
+body{
+  background:
+    radial-gradient(circle at top left,rgba(112,184,255,.25),transparent 35%),
+    radial-gradient(circle at top right,rgba(255,209,102,.18),transparent 30%),
+    linear-gradient(180deg,#06101d,#091a2c 60%,#050c17);
+}
+.app{
+  max-width:720px;
+  margin:0 auto;
+  padding:12px;
+}
+.header{
+  background:#102743;
+  border:2px solid #52e0a3;
+  border-radius:20px;
+  padding:14px;
+  text-align:center;
+}
+h1{
+  margin:0;
+  font-size:30px;
+  line-height:1.1;
+}
+.py{
+  display:block;
+  color:#ffd166;
+  font-size:16px;
+  font-weight:bold;
+  margin-top:4px;
+}
+.ok{
+  margin-top:10px;
+  background:#52e0a3;
+  color:#06101d;
+  border-radius:12px;
+  padding:8px;
+  font-weight:bold;
+}
+.desc{
+  margin-top:10px;
+  color:#dcecff;
+  font-size:14px;
+  line-height:1.4;
+}
+.stats{
+  display:grid;
+  grid-template-columns:repeat(4,1fr);
+  gap:8px;
+  margin-top:12px;
+}
+.box{
+  background:#0d1d32;
+  border:1px solid #355477;
+  border-radius:14px;
+  padding:9px 4px;
+  text-align:center;
+}
+.box b{
+  display:block;
+  font-size:22px;
+}
+.box span{
+  display:block;
+  font-size:11px;
+  color:#bcd3ef;
+  line-height:1.2;
+}
+.controls{
+  display:grid;
+  grid-template-columns:1fr 1fr 1fr;
+  gap:8px;
+  margin-top:12px;
+}
+button{
+  border:0;
+  border-radius:15px;
+  padding:12px 6px;
+  font-size:14px;
+  font-weight:bold;
+  color:#06101d;
+  background:#ffd166;
+  cursor:pointer;
+}
+button.green{
+  background:#52e0a3;
+}
+button.red{
+  background:#ff6b6b;
+}
+button.dark{
+  background:#1b3556;
+  color:white;
+  border:1px solid #355477;
+}
+button:active{
+  transform:scale(.97);
+}
+.levels{
+  display:grid;
+  grid-template-columns:repeat(10,1fr);
+  gap:4px;
+  margin-top:10px;
+}
+.levels button{
+  padding:8px 0;
+  background:#102946;
+  color:white;
+  border:1px solid #355477;
+  border-radius:10px;
+}
+.levels button.active{
+  background:linear-gradient(135deg,#ffd166,#52e0a3);
+  color:#06101d;
+}
+.levels button.pass{
+  border-color:#52e0a3;
+}
+.levels button.low{
+  border-color:#ff6b6b;
+}
+.game{
+  position:relative;
+  height:430px;
+  margin-top:14px;
+  overflow:hidden;
+  border:2px solid #355477;
+  border-radius:24px;
+  background:linear-gradient(180deg,#0d1d32,#07111f);
+  touch-action:manipulation;
+  user-select:none;
+}
+.hint{
+  position:absolute;
+  left:8px;
+  right:8px;
+  top:8px;
+  z-index:5;
+  background:rgba(0,0,0,.38);
+  border-radius:14px;
+  padding:8px;
+  text-align:center;
+  font-size:13px;
+  font-weight:bold;
+  line-height:1.35;
+}
+.pattern{
+  position:absolute;
+  top:62px;
+  left:8px;
+  right:8px;
+  z-index:4;
+  display:flex;
+  justify-content:center;
+  gap:5px;
+  flex-wrap:wrap;
+}
+.chip{
+  width:32px;
+  height:32px;
+  border-radius:10px;
+  background:rgba(255,255,255,.12);
+  border:1px solid rgba(255,255,255,.2);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-size:22px;
+  font-weight:bold;
+}
+.target{
+  position:absolute;
+  left:50%;
+  bottom:24px;
+  transform:translateX(-50%);
+  width:132px;
+  height:132px;
+  border:5px solid white;
+  border-radius:50%;
+  background:rgba(82,224,163,.20);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-size:46px;
+  box-shadow:0 0 28px rgba(82,224,163,.8);
+  z-index:3;
+}
+.target.flash{
+  animation:flash .2s;
+}
+@keyframes flash{
+  50%{transform:translateX(-50%) scale(1.12);}
+}
+.playerText{
+  position:absolute;
+  left:50%;
+  bottom:4px;
+  transform:translateX(-50%);
+  z-index:4;
+  background:rgba(0,0,0,.45);
+  padding:4px 10px;
+  border-radius:999px;
+  text-align:center;
+  font-size:12px;
+  font-weight:bold;
+  line-height:1.2;
+}
+.tapHelp{
+  position:absolute;
+  left:50%;
+  bottom:168px;
+  transform:translateX(-50%);
+  z-index:5;
+  background:rgba(255,255,255,.1);
+  border:1px solid rgba(255,255,255,.18);
+  border-radius:999px;
+  padding:8px 12px;
+  text-align:center;
+  font-size:13px;
+  font-weight:bold;
+  line-height:1.25;
+}
+.note{
+  position:absolute;
+  left:50%;
+  top:-90px;
+  transform:translateX(-50%);
+  width:78px;
+  height:78px;
+  border-radius:20px;
+  background:#ffd166;
+  color:#06101d;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-size:52px;
+  font-weight:bold;
+  border:3px solid white;
+  box-shadow:0 16px 32px rgba(0,0,0,.35);
+  z-index:2;
+}
+.note.eighth{
+  background:#70b8ff;
+}
+.note.miss{
+  opacity:.25;
+  filter:grayscale(1);
+}
+.feedback{
+  position:absolute;
+  top:43%;
+  left:50%;
+  transform:translate(-50%,-50%);
+  z-index:10;
+  font-size:42px;
+  font-weight:bold;
+  color:#52e0a3;
+  text-align:center;
+  line-height:1;
+  opacity:0;
+  pointer-events:none;
+  text-shadow:0 8px 24px rgba(0,0,0,.5);
+}
+.feedback small{
+  display:block;
+  font-size:16px;
+  color:#dbe9ff;
+  margin-top:6px;
+}
+.feedback.show{
+  animation:pop .7s;
+}
+@keyframes pop{
+  0%{opacity:0;transform:translate(-50%,-50%) scale(.7);}
+  20%{opacity:1;transform:translate(-50%,-50%) scale(1);}
+  100%{opacity:0;transform:translate(-50%,-70%) scale(1);}
+}
+.bigTap{
+  margin-top:12px;
+  width:100%;
+  min-height:74px;
+  border-radius:22px;
+  font-size:26px;
+  background:linear-gradient(90deg,#52e0a3,#ffd166);
+}
+.tableBox{
+  margin-top:12px;
+  background:#0d1d32;
+  border:1px solid #355477;
+  border-radius:16px;
+  padding:10px;
+}
+table{
+  width:100%;
+  border-collapse:collapse;
+  font-size:13px;
+}
+th,td{
+  border-bottom:1px solid #355477;
+  padding:6px;
+  text-align:center;
+}
+th{
+  color:#dcecff;
+}
+.small{
+  margin-top:8px;
+  color:#bcd3ef;
+  font-size:12px;
+  text-align:center;
+  line-height:1.5;
+}
+</style>
+</head>
+
+<body>
+<div class="app">
+
+  <div class="header">
+    <h1>中文拼音节奏考试</h1>
+    <span class="py">Zhōngwén Pīnyīn Jiézòu Kǎoshì</span>
+    <div class="ok">LOAD OK / 页面已显示 / yèmiàn yǐ xiǎnshì</div>
+    <div class="desc">
+      音符向玩家移动，音符到达圆圈时点击屏幕。<br>
+      <span class="py">Yīnfú xiàng wánjiā yídòng, yīnfú dàodá yuánquān shí diǎnjī píngmù.</span>
+    </div>
+  </div>
+
+  <div class="stats">
+    <div class="box">
+      <b id="levelText">1</b>
+      <span>级别<br>jíbié</span>
+    </div>
+    <div class="box">
+      <b id="bpmText">62</b>
+      <span>速度<br>sùdù</span>
+    </div>
+    <div class="box">
+      <b id="scoreText">0</b>
+      <span>本级分<br>běn jí fēn</span>
+    </div>
+    <div class="box">
+      <b id="totalText">0.00</b>
+      <span>总分/10<br>zǒngfēn</span>
+    </div>
+  </div>
+
+  <div class="controls">
+    <button class="green" onclick="startExam()">开始考试<br>kāishǐ kǎoshì</button>
+    <button class="dark" onclick="toggleMusic()" id="musicBtn">开启音乐<br>kāiqǐ yīnyuè</button>
+    <button class="red" onclick="stopGame()">停止<br>tíngzhǐ</button>
+  </div>
+
+  <div class="levels" id="levels"></div>
+
+  <div class="game" id="game">
+    <div class="hint">
+      ♩ = 点击 1 次 diǎnjī yí cì<br>
+      ♪♪ = 连续点击 2 次 liánxù diǎnjī liǎng cì
+    </div>
+
+    <div class="pattern" id="pattern"></div>
+
+    <div class="feedback" id="feedback">
+      完美<br><small>wánměi</small>
+    </div>
+
+    <div class="tapHelp">
+      音符到达圆圈时点击<br>
+      yīnfú dàodá yuánquān shí diǎnjī
+    </div>
+
+    <div class="target" id="target">👤</div>
+
+    <div class="playerText">
+      玩家<br>wánjiā
+    </div>
+  </div>
+
+  <button class="bigTap" onclick="tap()">
+    点击节奏<br>
+    <span style="font-size:16px">diǎnjī jiézòu</span>
+  </button>
+
+  <div class="tableBox">
+    <table>
+      <thead>
+        <tr>
+          <th>级别<br>jíbié</th>
+          <th>分数<br>fēnshù</th>
+          <th>得分<br>défēn</th>
+          <th>结果<br>jiéguǒ</th>
+        </tr>
+      </thead>
+      <tbody id="rows"></tbody>
+    </table>
+  </div>
+
+  <div class="small">
+    每级 100 分 = 1 分｜10 级共 1000 分 = 10 分满分<br>
+    Měi jí yì bǎi fēn = yì fēn｜shí jí gòng yì qiān fēn = shí fēn mǎnfēn
+  </div>
+
+</div>
+
+<script>
+var bpmList = [0,62,68,74,80,86,92,98,104,112,120];
+
+var patterns = {
+  1:['q','q','q','q','q','q','q','q'],
+  2:['q','q','ee','q','q','q','ee','q'],
+  3:['q','ee','q','q','ee','q','q','q'],
+  4:['q','ee','ee','q','q','ee','q','q'],
+  5:['ee','q','ee','q','q','ee','ee','q'],
+  6:['q','ee','ee','q','ee','q','ee','q'],
+  7:['ee','ee','q','q','ee','q','ee','ee'],
+  8:['q','ee','q','ee','ee','q','ee','ee'],
+  9:['ee','q','ee','ee','q','ee','ee','q'],
+  10:['ee','ee','q','ee','q','ee','ee','ee']
+};
+
+var level = 1;
+var running = false;
+var note = null;
+var targetTime = 0;
+var currentEvents = [];
+var eventIndex = 0;
+var rawScore = 0;
+var maxScore = 0;
+var results = [null,null,null,null,null,null,null,null,null,null,null];
+
+var audioCtx = null;
+var musicOn = false;
+var musicTimer = null;
+var musicBeat = 0;
+
+function getAudio(){
+  if(!audioCtx){
+    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  }
+  if(audioCtx.state === 'suspended'){
+    audioCtx.resume();
+  }
+}
+
+function beep(freq,dur,gain){
+  getAudio();
+  var o = audioCtx.createOscillator();
+  var g = audioCtx.createGain();
+  o.type = 'triangle';
+  o.frequency.value = freq;
+  g.gain.value = gain || 0.05;
+  o.connect(g);
+  g.connect(audioCtx.destination);
+  o.start();
+  g.gain.exponentialRampToValueAtTime(0.0001,audioCtx.currentTime + (dur || 0.08));
+  o.stop(audioCtx.currentTime + (dur || 0.08) + 0.03);
+}
+
+function musicLoop(){
+  if(!musicOn){return;}
+  var roots = [220,196,174.61,196,146.83,174.61,196,220];
+  var root = roots[Math.floor(musicBeat/4) % roots.length];
+
+  beep(root*2,0.08,0.025);
+
+  if(musicBeat % 4 === 0){
+    beep(root,0.35,0.018);
+    beep(root*1.189,0.35,0.014);
+    beep(root*1.498,0.35,0.014);
+  }
+
+  musicBeat++;
+  musicTimer = setTimeout(musicLoop,60000 / bpmList[level]);
+}
+
+function toggleMusic(){
+  getAudio();
+  musicOn = !musicOn;
+  var btn = document.getElementById('musicBtn');
+
+  if(musicTimer){
+    clearTimeout(musicTimer);
+  }
+
+  musicBeat = 0;
+
+  if(musicOn){
+    btn.innerHTML = '关闭音乐<br>guānbì yīnyuè';
+    musicLoop();
+  }else{
+    btn.innerHTML = '开启音乐<br>kāiqǐ yīnyuè';
+  }
+}
+
+function buildLevels(){
+  var box = document.getElementById('levels');
+  box.innerHTML = '';
+
+  for(var i=1;i<=10;i++){
+    var b = document.createElement('button');
+    b.textContent = i;
+    b.setAttribute('data-level',i);
+    b.onclick = function(){
+      if(running){return;}
+      level = Number(this.getAttribute('data-level'));
+      updateTop();
+      renderPattern();
+      updateLevelButtons();
+    };
+    box.appendChild(b);
+  }
+}
+
+function updateLevelButtons(){
+  var buttons = document.querySelectorAll('#levels button');
+
+  for(var i=0;i<buttons.length;i++){
+    var lv = Number(buttons[i].getAttribute('data-level'));
+    buttons[i].className = '';
+
+    if(lv === level){
+      buttons[i].className += ' active';
+    }
+
+    if(results[lv] !== null){
+      if(results[lv] >= 60){
+        buttons[i].className += ' pass';
+      }else{
+        buttons[i].className += ' low';
+      }
+    }
+  }
+}
+
+function updateTop(){
+  document.getElementById('levelText').textContent = level;
+  document.getElementById('bpmText').textContent = bpmList[level];
+
+  var points = 0;
+  if(maxScore > 0){
+    points = Math.round(rawScore / maxScore * 100);
+  }
+
+  document.getElementById('scoreText').textContent = points;
+
+  var total = 0;
+  for(var i=1;i<=10;i++){
+    if(results[i] !== null){
+      total += results[i];
+    }
+  }
+  document.getElementById('totalText').textContent = (total / 100).toFixed(2);
+
+  updateLevelButtons();
+}
+
+function renderPattern(){
+  var box = document.getElementById('pattern');
+  box.innerHTML = '';
+
+  var p = patterns[level];
+
+  for(var i=0;i<p.length;i++){
+    var c = document.createElement('div');
+    c.className = 'chip';
+    c.textContent = p[i] === 'q' ? '♩' : '♪♪';
+    box.appendChild(c);
+  }
+}
+
+function drawRows(){
+  var html = '';
+  var total = 0;
+
+  for(var i=1;i<=10;i++){
+    var r = results[i];
+
+    if(r !== null){
+      total += r;
+    }
+
+    html += '<tr>';
+    html += '<td>'+i+'</td>';
+    html += '<td>'+(r === null ? '-' : r)+'</td>';
+    html += '<td>'+(r === null ? '-' : (r/100).toFixed(2))+'</td>';
+
+    if(r === null){
+      html += '<td>-</td>';
+    }else if(r >= 60){
+      html += '<td>通过<br>tōngguò</td>';
+    }else{
+      html += '<td>继续练习<br>jìxù liànxí</td>';
+    }
+
+    html += '</tr>';
+  }
+
+  document.getElementById('rows').innerHTML = html;
+  document.getElementById('totalText').textContent = (total / 100).toFixed(2);
+}
+
+function makeEvents(){
+  var arr = [];
+  var base = patterns[level];
+  var repeat = level < 5 ? 2 : 3;
+
+  for(var r=0;r<repeat;r++){
+    for(var i=0;i<base.length;i++){
+      if(base[i] === 'q'){
+        arr.push('♩');
+      }else{
+        arr.push('♪');
+        arr.push('♪');
+      }
+    }
+  }
+
+  return arr;
+}
+
+function startExam(){
+  results = [null,null,null,null,null,null,null,null,null,null,null];
+  level = 1;
+  drawRows();
+  startLevel();
+}
+
+function startLevel(){
+  getAudio();
+
+  running = true;
+  rawScore = 0;
+  currentEvents = makeEvents();
+  maxScore = currentEvents.length * 100;
+  eventIndex = 0;
+
+  updateTop();
+  renderPattern();
+  nextNote();
+}
+
+function nextNote(){
+  if(!running){return;}
+
+  if(eventIndex >= currentEvents.length){
+    finishLevel();
+    return;
+  }
+
+  if(note){
+    note.remove();
+    note = null;
+  }
+
+  var game = document.getElementById('game');
+  note = document.createElement('div');
+  note.className = 'note';
+
+  var symbol = currentEvents[eventIndex];
+  note.textContent = symbol;
+
+  if(symbol === '♪'){
+    note.className += ' eighth';
+  }
+
+  var lane = 50 + ((eventIndex % 5) - 2) * 8;
+  note.style.left = lane + '%';
+
+  game.appendChild(note);
+
+  targetTime = performance.now() + 1900;
+  animateNote(performance.now(),1900);
+
+  eventIndex++;
+}
+
+function animateNote(start,duration){
+  var game = document.getElementById('game');
+  var targetY = game.clientHeight - 115;
+
+  function frame(){
+    if(!running || !note){return;}
+
+    var now = performance.now();
+    var p = (now - start) / duration;
+
+    var y = -90 + p * (targetY + 90);
+    var scale = 0.65 + p * 0.45;
+
+    note.style.top = y + 'px';
+    note.style.transform = 'translateX(-50%) scale('+scale+')';
+
+    if(p > 1.15){
+      note.className += ' miss';
+      showFeedback('失误','shīwù','#ff6b6b');
+      beep(160,0.10,0.035);
+      setTimeout(nextNote,180);
+      return;
+    }
+
+    requestAnimationFrame(frame);
+  }
+
+  frame();
+}
+
+function tap(){
+  if(!running){return;}
+
+  getAudio();
+
+  var target = document.getElementById('target');
+  target.classList.remove('flash');
+  void target.offsetWidth;
+  target.classList.add('flash');
+
+  if(!note){
+    return;
+  }
+
+  var err = Math.abs(performance.now() - targetTime);
+
+  if(err > 260){
+    showFeedback('失误','shīwù','#ff6b6b');
+    beep(160,0.10,0.035);
+    return;
+  }
+
+  var add = 40;
+  var cn = '稍晚';
+  var py = 'shāo wǎn';
+  var color = '#ffd166';
+
+  if(err <= 75){
+    add = 100;
+    cn = '完美';
+    py = 'wánměi';
+    color = '#52e0a3';
+  }else if(err <= 135){
+    add = 85;
+    cn = '很好';
+    py = 'hěn hǎo';
+    color = '#70b8ff';
+  }else if(err <= 220){
+    add = 70;
+    cn = '不错';
+    py = 'búcuò';
+    color = '#ffd166';
+  }
+
+  rawScore += add;
+
+  note.remove();
+  note = null;
+
+  showFeedback(cn,py,color);
+  beep(add >= 85 ? 1046 : 660,0.07,0.055);
+
+  updateTop();
+  setTimeout(nextNote,120);
+}
+
+function showFeedback(cn,py,color){
+  var f = document.getElementById('feedback');
+  f.innerHTML = cn + '<br><small>' + py + '</small>';
+  f.style.color = color;
+
+  f.classList.remove('show');
+  void f.offsetWidth;
+  f.classList.add('show');
+}
+
+function finishLevel(){
+  running = false;
+
+  if(note){
+    note.remove();
+    note = null;
+  }
+
+  var point = 0;
+  if(maxScore > 0){
+    point = Math.round(rawScore / maxScore * 100);
+  }
+
+  results[level] = point;
+
+  drawRows();
+  updateTop();
+
+  if(level < 10){
+    level++;
+    updateTop();
+    renderPattern();
+    setTimeout(startLevel,700);
+  }else{
+    showFeedback('完成','wánchéng','#52e0a3');
+  }
+}
+
+function stopGame(){
+  running = false;
+
+  if(note){
+    note.remove();
+    note = null;
+  }
+
+  showFeedback('停止','tíngzhǐ','#ff6b6b');
+}
+
+document.getElementById('game').onclick = tap;
+
+buildLevels();
+renderPattern();
+drawRows();
+updateTop();
+</script>
+</body>
+</html>
