@@ -670,7 +670,9 @@ function getCompletedLevels(){
   return count;
 }
 
-function saveStudentScore(){
+const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwtwq4Bm6SD-gBkPLV2tMNjRk9Za2Nli1KSPSqUmh90v2q4t9miXWgmmNYKpmXhx7YM/exec";
+
+async function saveStudentScore(){
   var name=document.getElementById("studentName").value.trim();
   var studentClass=document.getElementById("studentClass").value.trim();
   var studentNo=document.getElementById("studentNo").value.trim();
@@ -704,9 +706,7 @@ function saveStudentScore(){
     levelScores.push(results[i]===null?"":results[i]);
   }
 
-  var data=JSON.parse(localStorage.getItem("rhythmStudentScores")||"[]");
-
-  data.push({
+  var payload={
     studentClass:studentClass,
     studentNo:studentNo,
     name:name,
@@ -714,12 +714,27 @@ function saveStudentScore(){
     grade:grade,
     levelScores:levelScores,
     time:time
-  });
+  };
 
+  var data=JSON.parse(localStorage.getItem("rhythmStudentScores")||"[]");
+  data.push(payload);
   localStorage.setItem("rhythmStudentScores",JSON.stringify(data));
-
   renderSavedScores();
-  alert("บันทึกคะแนนแล้ว: "+studentClass+" เลขที่ "+studentNo+" "+name+" = "+grade+" / 10");
+
+  try{
+    await fetch(APPS_SCRIPT_URL,{
+      method:"POST",
+      mode:"no-cors",
+      headers:{
+        "Content-Type":"text/plain;charset=utf-8"
+      },
+      body:JSON.stringify(payload)
+    });
+
+    alert("ส่งคะแนนแล้ว: "+studentClass+" เลขที่ "+studentNo+" "+name+" = "+grade+" / 10");
+  }catch(err){
+    alert("บันทึกในเครื่องแล้ว แต่ส่งเข้า Google Sheet ไม่สำเร็จ");
+  }
 }
 
 function renderSavedScores(){
